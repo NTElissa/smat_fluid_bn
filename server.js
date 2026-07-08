@@ -14,6 +14,9 @@ import ivMonitorRoutes from "./routes/ivMonitorRoutes.js";
 import patientRoutes from "./routes/patientRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import roomRoutes from "./routes/roomRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
 import { setupSocketIO } from "./websocket/socketHandler.js";
 
@@ -80,6 +83,9 @@ app.use("/api/iv-monitors", ivMonitorRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/users", userRoutes);
 
 // =======================
 // ERROR HANDLER

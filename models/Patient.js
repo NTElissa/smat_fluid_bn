@@ -1,3 +1,4 @@
+// models/Patient.js
 import mongoose from "mongoose";
 
 const patientSchema = new mongoose.Schema({
@@ -26,7 +27,11 @@ const patientSchema = new mongoose.Schema({
     enum: ["male", "female", "other"],
     required: true
   },
-  phoneNumber: String,
+  phoneNumber: {
+    type: String,
+    required: [true, "Phone number is required"]
+  },
+  email: String,
   address: String,
   emergencyContact: {
     name: String,
@@ -41,9 +46,10 @@ const patientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
-  ward: String,
-  room: String,
-  bed: String,
+  roomId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Room"
+  },
   admissionDate: {
     type: Date,
     default: Date.now
@@ -76,6 +82,15 @@ const patientSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
+});
+
+// Generate patient ID before saving
+patientSchema.pre('save', async function(next) {
+  if (!this.patientId) {
+    const count = await mongoose.model('Patient').countDocuments();
+    this.patientId = `PT${String(count + 1).padStart(5, '0')}`;
+  }
+  next();
 });
 
 const Patient = mongoose.model("Patient", patientSchema);
