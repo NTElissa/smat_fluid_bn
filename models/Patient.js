@@ -90,7 +90,7 @@ patientSchema.pre('save', async function(next) {
     const count = await mongoose.model('Patient').countDocuments();
     this.patientId = `PT${String(count + 1).padStart(5, '0')}`;
   }
-  next();
+
 });
 
 const Patient = mongoose.model("Patient", patientSchema);

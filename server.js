@@ -95,7 +95,7 @@ app.use(errorHandler);
 // =======================
 // START SERVER
 // =======================
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT ;
 
 httpServer.listen(PORT, () => {
   console.log(`✅ Server running on port http://localhost:${PORT}`);

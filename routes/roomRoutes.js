@@ -7,6 +7,10 @@ import { buildRoomQuery, pickRoomUpdateFields, normalizeRoomPayload } from "../u
 
 const router = express.Router();
 
+const isValidObjectId = (value) => {
+  return Boolean(value) && mongoose.Types.ObjectId.isValid(value);
+};
+
 //
 // Helper: validate assignedStaff array against real users + roles
 //
@@ -72,10 +76,47 @@ router.get("/", protect, async (req, res, next) => {
 });
 
 //
+// GET AVAILABLE ROOMS
+//
+router.get("/available", protect, async (req, res, next) => {
+  try {
+    const query = {
+      isActive: true,
+      status: { $ne: "maintenance" },
+    };
+
+    if (req.query.ward) query.ward = req.query.ward;
+    if (req.query.type) query.type = req.query.type;
+    if (req.query.status) query.status = req.query.status;
+
+    const rooms = await Room.find(query)
+      .sort({ roomNumber: 1 })
+      .populate("assignedStaff.user", "firstName lastName role");
+
+    const availableRooms = rooms.filter((room) => room.currentOccupancy < room.capacity);
+
+    res.json({
+      success: true,
+      count: availableRooms.length,
+      data: availableRooms,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+//
 // GET SINGLE ROOM
 //
 router.get("/:id", protect, async (req, res, next) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid room id",
+      });
+    }
+
     const room = await Room.findById(req.params.id)
       .populate("assignedStaff.user", "firstName lastName role");
 
@@ -150,6 +191,13 @@ router.post(
 //
 router.put("/:id", protect, async (req, res, next) => {
   try {
+    if (!isValidObjectId(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid room id",
+      });
+    }
+
     const payload = pickRoomUpdateFields(req.body);
 
     if (payload.roomNumber || payload.ward) {
@@ -198,6 +246,13 @@ router.put(
   authorize("admin"),
   async (req, res, next) => {
     try {
+      if (!isValidObjectId(req.params.id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid room id",
+        });
+      }
+
       const { assignedStaff } = req.body;
 
       const { valid, errors } = await validateAssignedStaff(assignedStaff);
@@ -243,6 +298,13 @@ router.delete(
   authorize("admin"),
   async (req, res, next) => {
     try {
+      if (!isValidObjectId(req.params.id)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid room id",
+        });
+      }
+
       const room = await Room.findByIdAndDelete(req.params.id);
 
       if (!room) {
