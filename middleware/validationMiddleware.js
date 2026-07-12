@@ -29,10 +29,13 @@ export const validateLogin = [
 ];
 
 export const validateIVMonitor = [
-  body("deviceId").notEmpty().withMessage("Device ID is required"),
-  body("patientId").notEmpty().withMessage("Patient ID is required"),
-  body("fluidType").notEmpty().withMessage("Fluid type is required"),
-  body("fluidVolume").isNumeric().withMessage("Fluid volume must be a number"),
-  body("flowRate").isNumeric().withMessage("Flow rate must be a number"),
+  body("deviceId").trim().notEmpty().withMessage("Device ID is required"),
+  body("patientId").trim().notEmpty().withMessage("Patient ID is required"),
+  body("fluidType").trim().notEmpty().withMessage("Fluid type is required"),
+  body("fluidVolume").isFloat({ gt: 0 }).withMessage("Fluid volume must be greater than 0"),
+  body("flowRate").isFloat({ gt: 0 }).withMessage("Flow rate must be greater than 0"),
+  body("location.ward").optional().isString(),
+  body("location.room").optional().isString(),
+  body("location.bed").optional().isString(),
   validateRequest
 ];

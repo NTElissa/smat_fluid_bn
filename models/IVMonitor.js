@@ -92,13 +92,21 @@ const ivMonitorSchema = new mongoose.Schema({
 });
 
 // Calculate estimated end time before saving
-ivMonitorSchema.pre("save", function() {
-  if (this.isModified("currentLevel") || this.isModified("flowRate")) {
-    const remainingFluid = (this.currentLevel / 100) * this.fluidVolume;
-    const hoursRemaining = remainingFluid / this.flowRate;
-    this.estimatedEndTime = new Date(Date.now() + hoursRemaining * 60 * 60 * 1000);
+ivMonitorSchema.pre("save", function(next) {
+  const hasValidFlowRate = typeof this.flowRate === "number" && this.flowRate > 0;
+  const hasValidVolume = typeof this.fluidVolume === "number" && this.fluidVolume > 0;
+
+  if (this.isModified("currentLevel") || this.isModified("flowRate") || this.isModified("fluidVolume")) {
+    if (hasValidFlowRate && hasValidVolume && this.currentLevel > 0) {
+      const remainingFluid = (this.currentLevel / 100) * this.fluidVolume;
+      const hoursRemaining = remainingFluid / this.flowRate;
+      this.estimatedEndTime = new Date(Date.now() + hoursRemaining * 60 * 60 * 1000);
+    } else {
+      this.estimatedEndTime = null;
+    }
   }
 
+  // next();
 });
 
 const IVMonitor = mongoose.model("IVMonitor", ivMonitorSchema);

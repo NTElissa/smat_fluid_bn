@@ -28,10 +28,33 @@ connectDB();
 const app = express();
 const httpServer = createServer(app);
 
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+].filter(Boolean);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS not allowed for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:8080",
-    methods: ["GET", "POST"],
+    ...corsOptions,
+    origin: allowedOrigins,
   },
 });
 
@@ -42,7 +65,7 @@ setupSocketIO(io);
 // MIDDLEWARE
 // =======================
 app.use(helmet());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -79,6 +102,7 @@ if (isDevelopment) {
 // ROUTES
 // =======================
 app.use("/api/auth", authRoutes);
+// app.use("/api/iv-monitors", ivMonitorRoutes);
 app.use("/api/iv-monitors", ivMonitorRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/alerts", alertRoutes);
@@ -95,7 +119,7 @@ app.use(errorHandler);
 // =======================
 // START SERVER
 // =======================
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT || 8080;
 
 httpServer.listen(PORT, () => {
   console.log(`✅ Server running on port http://localhost:${PORT}`);
